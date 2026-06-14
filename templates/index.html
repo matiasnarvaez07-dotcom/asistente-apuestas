@@ -1,29 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistente de Apuestas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Asistente de Apuestas MVP</h1>
-    <p>Servidor funcionando correctamente.</p>
+
+<div class="container">
+    <h1>⚽ Asistente de Apuestas</h1>
 
     <form method="POST">
-        <label>Equipo local:</label>
-        <input name="home_team" value="Colo Colo"><br><br>
 
-        <label>Equipo visitante:</label>
-        <input name="away_team" value="Universidad de Chile"><br><br>
+        <label>Liga</label>
+        <input type="text" name="league" value="{{ form_data.league if form_data else '' }}">
 
-        <label>Cuota local:</label>
-        <input name="cuota_home" value="2.10"><br><br>
+        <label>Casa de apuestas</label>
+        <input type="text" name="bookmaker" value="{{ form_data.bookmaker if form_data else '' }}">
 
-        <label>Cuota empate:</label>
-        <input name="cuota_draw" value="3.30"><br><br>
+        <label>Equipo Local</label>
+        <input type="text" name="home_team" value="{{ form_data.home_team if form_data else '' }}">
 
-        <label>Cuota visitante:</label>
-        <input name="cuota_away" value="3.50"><br><br>
+        <label>Equipo Visitante</label>
+        <input type="text" name="away_team" value="{{ form_data.away_team if form_data else '' }}">
 
-        <button type="submit">Analizar</button>
+        <label>Cuota Local</label>
+        <input type="number" step="0.01" name="cuota_home">
+
+        <label>Cuota Empate</label>
+        <input type="number" step="0.01" name="cuota_draw">
+
+        <label>Cuota Visitante</label>
+        <input type="number" step="0.01" name="cuota_away">
+
+        <button type="submit">Analizar Partido</button>
     </form>
+
+    {% if result %}
+    <div class="resultado">
+        <h2>Resultado</h2>
+        <pre>{{ result }}</pre>
+    </div>
+    {% endif %}
+
+    <a href="/history">Ver Historial</a>
+
+</div>
+
 </body>
 </html>
