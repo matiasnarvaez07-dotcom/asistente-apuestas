@@ -10,18 +10,20 @@
 <div class="container">
 
     <h1>⚽ Asistente de Apuestas</h1>
-    <p class="subtitulo">Análisis estadístico de partidos, cuotas y valor esperado.</p>
+    <p class="subtitulo">Ingresa los equipos y el asistente buscará los datos automáticamente.</p>
+
+    {% if error %}
+    <div class="error">
+        {{ error }}
+    </div>
+    {% endif %}
 
     <form method="POST">
-
         <label>Competición</label>
         <select name="league">
             <option>Mundial FIFA</option>
             <option>Champions League</option>
-            <option>Europa League</option>
-            <option>Conference League</option>
             <option>Copa Libertadores</option>
-            <option>Copa Sudamericana</option>
             <option>Premier League</option>
             <option>LaLiga</option>
             <option>Serie A</option>
@@ -30,67 +32,20 @@
             <option>Brasileirao</option>
             <option>Liga Profesional Argentina</option>
             <option>Primera División Chile</option>
-            <option>Primera B Chile</option>
-            <option>Copa Chile</option>
             <option>MLS</option>
             <option>Otra competición</option>
         </select>
 
         <label>Casa de apuestas</label>
-        <input type="text" name="bookmaker" value="Betsson">
+        <input type="text" name="bookmaker" value="{{ form_data.bookmaker }}">
 
         <label>Equipo local</label>
-        <input type="text" name="home_team" value="Colo Colo">
+        <input type="text" name="home_team" placeholder="Ej: Germany" value="{{ form_data.home_team }}">
 
         <label>Equipo visitante</label>
-        <input type="text" name="away_team" value="Universidad de Chile">
+        <input type="text" name="away_team" placeholder="Ej: Curacao" value="{{ form_data.away_team }}">
 
-        <h2>Cuotas 1X2</h2>
-
-        <label>Cuota local</label>
-        <input type="number" step="0.01" name="cuota_home" value="2.10">
-
-        <label>Cuota empate</label>
-        <input type="number" step="0.01" name="cuota_draw" value="3.30">
-
-        <label>Cuota visitante</label>
-        <input type="number" step="0.01" name="cuota_away" value="3.50">
-
-        <h2>Datos estadísticos</h2>
-
-        <label>xG local</label>
-        <input type="number" step="0.01" name="xg_home" value="1.75">
-
-        <label>xGA local</label>
-        <input type="number" step="0.01" name="xga_home" value="1.10">
-
-        <label>xG visitante</label>
-        <input type="number" step="0.01" name="xg_away" value="1.25">
-
-        <label>xGA visitante</label>
-        <input type="number" step="0.01" name="xga_away" value="1.40">
-
-        <label>ELO local</label>
-        <input type="number" name="elo_home" value="1680">
-
-        <label>ELO visitante</label>
-        <input type="number" name="elo_away" value="1620">
-
-        <label>Forma local últimos 5 partidos, puntos de 15</label>
-        <input type="number" name="form_home" value="10">
-
-        <label>Forma visitante últimos 5 partidos, puntos de 15</label>
-        <input type="number" name="form_away" value="8">
-
-        <label>Tamaño de muestra</label>
-        <input type="number" name="sample_size" value="10">
-
-        <label class="check">
-            <input type="checkbox" name="anomaly">
-            Evento anómalo detectado
-        </label>
-
-        <button type="submit">Analizar partido</button>
+        <button type="submit">Buscar datos y analizar</button>
     </form>
 
     {% if result %}
