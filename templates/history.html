@@ -7,32 +7,44 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
 <div class="container">
 
-    <h1>📊 Historial de Análisis</h1>
+    <h1>📊 Historial de análisis</h1>
 
     <table>
         <tr>
-            <th>ID</th>
             <th>Fecha</th>
+            <th>Liga</th>
+            <th>Partido</th>
             <th>Resultado</th>
+            <th>Cuota</th>
+            <th>Modelo</th>
+            <th>Mercado</th>
+            <th>Diferencia</th>
+            <th>Valor</th>
+            <th>IGC</th>
+            <th>Confianza</th>
         </tr>
 
-        {% for row in rows %}
+        {% for r in rows %}
         <tr>
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }}</td>
+            <td>{{ r.created_at }}</td>
+            <td>{{ r.league }}</td>
+            <td>{{ r.home_team }} vs {{ r.away_team }}</td>
+            <td>{{ r.outcome }}</td>
+            <td>{{ r.price }}</td>
+            <td>{{ r.model_probability }}%</td>
+            <td>{{ r.market_probability }}%</td>
+            <td>{{ r.edge }}%</td>
+            <td>{{ r.value_label }}</td>
+            <td>{{ r.igc }}</td>
+            <td>{{ r.confidence }}</td>
         </tr>
         {% endfor %}
     </table>
 
-    <br>
-
-    <a href="/">Volver</a>
+    <a href="/" class="link">Volver al inicio</a>
 
 </div>
-
 </body>
 </html>
