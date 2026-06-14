@@ -13,6 +13,31 @@ def api_football_headers():
 
 
 def search_team(team_name):
+    manual_teams = {
+        "germany": {"id": 25, "name": "Germany", "country": "Germany"},
+        "alemania": {"id": 25, "name": "Germany", "country": "Germany"},
+        "curacao": {"id": 650, "name": "Curaçao", "country": "Curaçao"},
+        "curazao": {"id": 650, "name": "Curaçao", "country": "Curaçao"},
+        "argentina": {"id": 26, "name": "Argentina", "country": "Argentina"},
+        "france": {"id": 2, "name": "France", "country": "France"},
+        "francia": {"id": 2, "name": "France", "country": "France"},
+        "brazil": {"id": 6, "name": "Brazil", "country": "Brazil"},
+        "brasil": {"id": 6, "name": "Brazil", "country": "Brazil"},
+        "spain": {"id": 9, "name": "Spain", "country": "Spain"},
+        "españa": {"id": 9, "name": "Spain", "country": "Spain"},
+        "england": {"id": 10, "name": "England", "country": "England"},
+        "inglaterra": {"id": 10, "name": "England", "country": "England"},
+        "portugal": {"id": 27, "name": "Portugal", "country": "Portugal"},
+        "netherlands": {"id": 15, "name": "Netherlands", "country": "Netherlands"},
+        "paises bajos": {"id": 15, "name": "Netherlands", "country": "Netherlands"},
+        "países bajos": {"id": 15, "name": "Netherlands", "country": "Netherlands"}
+    }
+
+    key = team_name.strip().lower()
+
+    if key in manual_teams:
+        return manual_teams[key], None
+
     if not API_FOOTBALL_KEY:
         return None, "API_FOOTBALL_KEY no está configurada."
 
@@ -33,12 +58,10 @@ def search_team(team_name):
         return None, f"API-Football respondió error {response.status_code}: {response.text}"
 
     data = response.json()
-print("BUSCANDO:", team_name)
-print("RESPUESTA API:", data)
     teams = data.get("response", [])
 
     if not teams:
-        return None, f"No se encontró el equipo: {team_name}. Prueba con el nombre en inglés."
+        return None, f"No se encontró el equipo: {team_name}."
 
     team = teams[0].get("team", {})
 
@@ -47,31 +70,6 @@ print("RESPUESTA API:", data)
         "name": team.get("name"),
         "country": team.get("country")
     }, None
-
-
-def get_team_last_fixtures(team_id, last=5):
-    url = f"{API_FOOTBALL_BASE}/fixtures"
-    params = {
-        "team": team_id,
-        "last": last
-    }
-
-    try:
-        response = requests.get(
-            url,
-            headers=api_football_headers(),
-            params=params,
-            timeout=20
-        )
-    except Exception:
-        return []
-
-    if response.status_code != 200:
-        return []
-
-    data = response.json()
-    return data.get("response", [])
-
 
 def calculate_form_points(team_id, fixtures):
     points = 0
