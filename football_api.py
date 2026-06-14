@@ -3,7 +3,8 @@ import requests
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 ODDS_API_KEY = os.getenv("ODDS_API_KEY")
-
+print("API_FOOTBALL_KEY:", API_FOOTBALL_KEY)
+print("ODDS_API_KEY:", ODDS_API_KEY)
 API_FOOTBALL_BASE = "https://v3.football.api-sports.io"
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 
