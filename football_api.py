@@ -3,102 +3,67 @@ import requests
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 ODDS_API_KEY = os.getenv("ODDS_API_KEY")
-print("API_FOOTBALL_KEY:", API_FOOTBALL_KEY)
-print("ODDS_API_KEY:", ODDS_API_KEY)
+
 API_FOOTBALL_BASE = "https://v3.football.api-sports.io"
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 
 
 def api_football_headers():
-    return {
-        "x-apisports-key": API_FOOTBALL_KEY
-    }
+    return {"x-apisports-key": API_FOOTBALL_KEY}
 
 
 def search_team(team_name):
     if not API_FOOTBALL_KEY:
-        return None
+        return None, "API_FOOTBALL_KEY no está configurada."
 
     url = f"{API_FOOTBALL_BASE}/teams"
     params = {"search": team_name}
 
-    response = requests.get(
-        url,
-        headers=api_football_headers(),
-        params=params,
-        timeout=20
-    )
+    try:
+        response = requests.get(
+            url,
+            headers=api_football_headers(),
+            params=params,
+            timeout=20
+        )
+    except Exception as e:
+        return None, f"Error conectando con API-Football: {e}"
 
     if response.status_code != 200:
-    print("ERROR SEARCH TEAM:", team_name)
-    print("STATUS:", response.status_code)
-    print("RESPUESTA:", response.text)
-    return None
+        return None, f"API-Football respondió error {response.status_code}: {response.text}"
 
     data = response.json()
 
-    if not data.get("response"):
-    print("SIN RESULTADOS PARA:", team_name)
-    print("RESPUESTA API:", data)
-    return None
+    teams = data.get("response", [])
 
-    team = data["response"][0]["team"]
+    if not teams:
+        return None, f"No se encontró el equipo: {team_name}. Prueba con el nombre en inglés."
+
+    team = teams[0].get("team", {})
 
     return {
         "id": team.get("id"),
         "name": team.get("name"),
         "country": team.get("country")
-    }
-
-
-def search_fixture(home_team, away_team):
-    home = search_team(home_team)
-    away = search_team(away_team)
-
-    if not home or not away:
-        return None
-
-    url = f"{API_FOOTBALL_BASE}/fixtures/headtohead"
-    params = {
-        "h2h": f"{home['id']}-{away['id']}",
-        "last": 5
-    }
-
-    response = requests.get(
-        url,
-        headers=api_football_headers(),
-        params=params,
-        timeout=20
-    )
-
-    if response.status_code != 200:
-        return None
-
-    data = response.json()
-
-    return {
-        "home_team": home,
-        "away_team": away,
-        "h2h": data.get("response", [])
-    }
+    }, None
 
 
 def get_team_last_fixtures(team_id, last=5):
-    if not API_FOOTBALL_KEY:
-        return []
-
     url = f"{API_FOOTBALL_BASE}/fixtures"
     params = {
         "team": team_id,
         "last": last
     }
 
-    response = requests.get(
-        url,
-        headers=api_football_headers(),
-        params=params,
-        timeout=20
-    )
+    try:
+        response = requests.get(
+            url,
+            headers=api_football_headers(),
+            params=params,
+            timeout=20
+        )
+    except Exception:
+        return []
 
     if response.status_code != 200:
         return []
@@ -110,11 +75,12 @@ def get_team_last_fixtures(team_id, last=5):
 def calculate_form_points(team_id, fixtures):
     points = 0
 
-    for f in fixtures:
-        teams = f.get("teams", {})
+    for fixture in fixtures:
+        teams = fixture.get("teams", {})
+        goals = fixture.get("goals", {})
+
         home = teams.get("home", {})
         away = teams.get("away", {})
-        goals = f.get("goals", {})
 
         home_goals = goals.get("home")
         away_goals = goals.get("away")
@@ -139,11 +105,12 @@ def estimate_xg_from_goals(team_id, fixtures):
     goals_against = 0
     count = 0
 
-    for f in fixtures:
-        teams = f.get("teams", {})
+    for fixture in fixtures:
+        teams = fixture.get("teams", {})
+        goals = fixture.get("goals", {})
+
         home = teams.get("home", {})
         away = teams.get("away", {})
-        goals = f.get("goals", {})
 
         home_goals = goals.get("home")
         away_goals = goals.get("away")
@@ -154,13 +121,12 @@ def estimate_xg_from_goals(team_id, fixtures):
         if home.get("id") == team_id:
             goals_for += home_goals
             goals_against += away_goals
+            count += 1
+
         elif away.get("id") == team_id:
             goals_for += away_goals
             goals_against += home_goals
-        else:
-            continue
-
-        count += 1
+            count += 1
 
     if count == 0:
         return {
@@ -183,8 +149,9 @@ def estimate_elo(team_name):
     ]
 
     strong = [
-        "Uruguay", "Croatia", "Colombia", "Morocco", "Switzerland",
-        "Japan", "Denmark", "Mexico", "USA", "United States"
+        "Uruguay", "Croatia", "Colombia", "Morocco",
+        "Switzerland", "Japan", "Denmark", "Mexico",
+        "USA", "United States"
     ]
 
     if team_name in elite:
@@ -196,11 +163,12 @@ def estimate_elo(team_name):
     return 1500
 
 
-def get_odds_from_the_odds_api(home_team, away_team, sport_key="soccer_fifa_world_cup"):
+def get_odds_from_the_odds_api(home_team, away_team):
     if not ODDS_API_KEY:
         return None
 
-    url = f"{ODDS_BASE}/sports/{sport_key}/odds"
+    url = f"{ODDS_BASE}/sports/soccer_fifa_world_cup/odds"
+
     params = {
         "apiKey": ODDS_API_KEY,
         "regions": "eu",
@@ -208,7 +176,10 @@ def get_odds_from_the_odds_api(home_team, away_team, sport_key="soccer_fifa_worl
         "oddsFormat": "decimal"
     }
 
-    response = requests.get(url, params=params, timeout=20)
+    try:
+        response = requests.get(url, params=params, timeout=20)
+    except Exception:
+        return None
 
     if response.status_code != 200:
         return None
@@ -216,59 +187,70 @@ def get_odds_from_the_odds_api(home_team, away_team, sport_key="soccer_fifa_worl
     games = response.json()
 
     for game in games:
-        home = game.get("home_team", "")
-        away = game.get("away_team", "")
+        api_home = game.get("home_team", "")
+        api_away = game.get("away_team", "")
 
-        if home_team.lower() in home.lower() and away_team.lower() in away.lower():
-            bookmakers = game.get("bookmakers", [])
+        home_match = home_team.lower() in api_home.lower()
+        away_match = away_team.lower() in api_away.lower()
 
-            if not bookmakers:
-                continue
+        if not home_match or not away_match:
+            continue
 
-            market = bookmakers[0]["markets"][0]
-            outcomes = market.get("outcomes", [])
+        bookmakers = game.get("bookmakers", [])
 
-            odds = {
-                "home": None,
-                "draw": None,
-                "away": None
-            }
+        if not bookmakers:
+            continue
 
-            for o in outcomes:
-                name = o.get("name", "")
-                price = o.get("price")
+        markets = bookmakers[0].get("markets", [])
 
-                if name.lower() == home.lower():
-                    odds["home"] = price
-                elif name.lower() == away.lower():
-                    odds["away"] = price
-                elif name.lower() == "draw":
-                    odds["draw"] = price
+        if not markets:
+            continue
 
-            return odds
+        outcomes = markets[0].get("outcomes", [])
+
+        odds = {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+        }
+
+        for outcome in outcomes:
+            name = outcome.get("name", "")
+            price = outcome.get("price", 0)
+
+            if name.lower() == api_home.lower():
+                odds["home"] = price
+            elif name.lower() == api_away.lower():
+                odds["away"] = price
+            elif name.lower() == "draw":
+                odds["draw"] = price
+
+        return odds
 
     return None
 
 
 def build_automatic_match_data(league, home_team, away_team, bookmaker="Betsson"):
-    fixture_data = search_fixture(home_team, away_team)
+    home, home_error = search_team(home_team)
 
-    if not fixture_data:
-        return None, "No se encontraron equipos en API-Football."
+    if home_error:
+        return None, home_error
 
-    home = fixture_data["home_team"]
-    away = fixture_data["away_team"]
+    away, away_error = search_team(away_team)
+
+    if away_error:
+        return None, away_error
 
     home_fixtures = get_team_last_fixtures(home["id"], 5)
     away_fixtures = get_team_last_fixtures(away["id"], 5)
 
-    home_xg = estimate_xg_from_goals(home["id"], home_fixtures)
-    away_xg = estimate_xg_from_goals(away["id"], away_fixtures)
+    home_stats = estimate_xg_from_goals(home["id"], home_fixtures)
+    away_stats = estimate_xg_from_goals(away["id"], away_fixtures)
 
     form_home = calculate_form_points(home["id"], home_fixtures)
     form_away = calculate_form_points(away["id"], away_fixtures)
 
-    odds = get_odds_from_the_odds_api(home_team, away_team)
+    odds = get_odds_from_the_odds_api(home["name"], away["name"])
 
     if not odds:
         odds = {
@@ -282,18 +264,18 @@ def build_automatic_match_data(league, home_team, away_team, bookmaker="Betsson"
         "bookmaker": bookmaker,
         "home_team": home["name"],
         "away_team": away["name"],
-        "cuota_home": odds["home"] or 0,
-        "cuota_draw": odds["draw"] or 0,
-        "cuota_away": odds["away"] or 0,
-        "xg_home": home_xg["xg"],
-        "xga_home": home_xg["xga"],
-        "xg_away": away_xg["xg"],
-        "xga_away": away_xg["xga"],
+        "cuota_home": odds["home"],
+        "cuota_draw": odds["draw"],
+        "cuota_away": odds["away"],
+        "xg_home": home_stats["xg"],
+        "xga_home": home_stats["xga"],
+        "xg_away": away_stats["xg"],
+        "xga_away": away_stats["xga"],
         "elo_home": estimate_elo(home["name"]),
         "elo_away": estimate_elo(away["name"]),
         "form_home": form_home,
         "form_away": form_away,
-        "sample_size": min(home_xg["sample_size"], away_xg["sample_size"]),
+        "sample_size": min(home_stats["sample_size"], away_stats["sample_size"]),
         "anomaly": False
     }
 
