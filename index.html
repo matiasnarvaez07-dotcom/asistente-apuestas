@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Asistente Deportivo IA - MVP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Asistente Deportivo IA</h1>
+      <p>MVP web para análisis estadístico de partidos</p>
+    </div>
+    <a class="navlink" href="/history">Historial</a>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Ingresar partido</h2>
+      <form method="post" class="grid-form">
+        <label>Liga
+          <input name="league" value="{{ form_data.league }}">
+        </label>
+        <label>Casa de apuestas
+          <input name="bookmaker" value="{{ form_data.bookmaker }}">
+        </label>
+        <label>Equipo local
+          <input name="home_team" value="{{ form_data.home_team }}">
+        </label>
+        <label>Equipo visitante
+          <input name="away_team" value="{{ form_data.away_team }}">
+        </label>
+
+        <h3>Cuotas 1X2</h3>
+        <label>Cuota local
+          <input name="cuota_home" type="number" step="0.01" value="{{ form_data.cuota_home }}">
+        </label>
+        <label>Cuota empate
+          <input name="cuota_draw" type="number" step="0.01" value="{{ form_data.cuota_draw }}">
+        </label>
+        <label>Cuota visitante
+          <input name="cuota_away" type="number" step="0.01" value="{{ form_data.cuota_away }}">
+        </label>
+
+        <h3>Datos estadísticos</h3>
+        <label>xG local
+          <input name="xg_home" type="number" step="0.01" value="{{ form_data.xg_home }}">
+        </label>
+        <label>xGA local
+          <input name="xga_home" type="number" step="0.01" value="{{ form_data.xga_home }}">
+        </label>
+        <label>xG visitante
+          <input name="xg_away" type="number" step="0.01" value="{{ form_data.xg_away }}">
+        </label>
+        <label>xGA visitante
+          <input name="xga_away" type="number" step="0.01" value="{{ form_data.xga_away }}">
+        </label>
+        <label>ELO local
+          <input name="elo_home" type="number" value="{{ form_data.elo_home }}">
+        </label>
+        <label>ELO visitante
+          <input name="elo_away" type="number" value="{{ form_data.elo_away }}">
+        </label>
+        <label>Forma local últimos 5 partidos, puntos de 15
+          <input name="form_home" type="number" value="{{ form_data.form_home }}">
+        </label>
+        <label>Forma visitante últimos 5 partidos, puntos de 15
+          <input name="form_away" type="number" value="{{ form_data.form_away }}">
+        </label>
+        <label>Tamaño de muestra
+          <input name="sample_size" type="number" value="{{ form_data.sample_size }}">
+        </label>
+        <label class="checkbox">
+          <input name="anomaly" type="checkbox" {% if form_data.anomaly %}checked{% endif %}>
+          Evento anómalo detectado
+        </label>
+
+        <button type="submit">Analizar partido</button>
+      </form>
+    </section>
+
+    {% if result %}
+    <section class="card result-card">
+      <h2>Resultado del análisis</h2>
+      <div class="summary">
+        <div>
+          <span>Partido</span>
+          <strong>{{ result.match }}</strong>
+        </div>
+        <div>
+          <span>Liga</span>
+          <strong>{{ result.league }}</strong>
+        </div>
+        <div>
+          <span>Casa</span>
+          <strong>{{ result.bookmaker }}</strong>
+        </div>
+      </div>
+
+      <h3>Goles esperados ajustados</h3>
+      <div class="pill-row">
+        <span class="pill">Local: {{ result.xg_adjusted.home }}</span>
+        <span class="pill">Visitante: {{ result.xg_adjusted.away }}</span>
+      </div>
+
+      <h3>Marcadores más probables</h3>
+      <div class="score-grid">
+        {% for s in result.top_scores %}
+          <div class="score-box">
+            <strong>{{ s.score }}</strong>
+            <span>{{ s.probability }}%</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <h3>Modelos componentes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Local</th>
+              <th>Empate</th>
+              <th>Visitante</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for model_name, probs in result.component_models.items() %}
+            <tr>
+              <td>{{ model_name }}</td>
+              <td>{{ probs.home }}%</td>
+              <td>{{ probs.draw }}%</td>
+              <td>{{ probs.away }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Mercados 1X2</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Resultado</th>
+              <th>Cuota</th>
+              <th>Modelo</th>
+              <th>Mercado</th>
+              <th>Diferencia</th>
+              <th>Valor</th>
+              <th>Riesgo</th>
+              <th>IGC</th>
+              <th>Confianza</th>
+              <th>Justificación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in result.analyses %}
+            <tr>
+              <td>{{ a.outcome_label }}</td>
+              <td>{{ a.price }}</td>
+              <td>{{ a.model_probability }}%</td>
+              <td>{{ a.market_probability }}%</td>
+              <td class="{% if a.edge and a.edge > 0 %}positive{% else %}negative{% endif %}">{{ a.edge }}%</td>
+              <td>{{ a.value_label }}</td>
+              <td>{{ a.risk }}</td>
+              <td>{{ a.igc }}</td>
+              <td>{{ a.confidence }}</td>
+              <td>{{ a.reason }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quick">
+        <h3>Resumen rápido</h3>
+        <p><strong>Mejor opción estadística:</strong> {{ result.best.outcome_label }}</p>
+        <p><strong>Valor:</strong> {{ result.best.value_label }}</p>
+        <p><strong>Riesgo:</strong> {{ result.best.risk }}</p>
+        <p><strong>Motivo:</strong> {{ result.best.reason }}</p>
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

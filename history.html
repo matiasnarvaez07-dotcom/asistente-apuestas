@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Historial - Asistente Deportivo IA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Historial</h1>
+      <p>Últimos análisis guardados</p>
+    </div>
+    <a class="navlink" href="/">Volver</a>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Liga</th>
+              <th>Partido</th>
+              <th>Resultado</th>
+              <th>Cuota</th>
+              <th>Modelo</th>
+              <th>Mercado</th>
+              <th>Diferencia</th>
+              <th>Valor</th>
+              <th>IGC</th>
+              <th>Confianza</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+            <tr>
+              <td>{{ r.created_at }}</td>
+              <td>{{ r.league }}</td>
+              <td>{{ r.home_team }} vs {{ r.away_team }}</td>
+              <td>{{ r.outcome }}</td>
+              <td>{{ r.price }}</td>
+              <td>{{ r.model_probability }}%</td>
+              <td>{{ r.market_probability }}%</td>
+              <td class="{% if r.edge and r.edge > 0 %}positive{% else %}negative{% endif %}">{{ r.edge }}%</td>
+              <td>{{ r.value_label }}</td>
+              <td>{{ r.igc }}</td>
+              <td>{{ r.confidence }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
