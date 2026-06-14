@@ -7,46 +7,151 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
 <div class="container">
+
     <h1>⚽ Asistente de Apuestas</h1>
+    <p class="subtitulo">Análisis estadístico de partidos, cuotas y valor esperado.</p>
 
     <form method="POST">
 
-        <label>Liga</label>
-        <input type="text" name="league" value="{{ form_data.league if form_data else '' }}">
+        <label>Competición</label>
+        <select name="league">
+            <option>Mundial FIFA</option>
+            <option>Champions League</option>
+            <option>Europa League</option>
+            <option>Conference League</option>
+            <option>Copa Libertadores</option>
+            <option>Copa Sudamericana</option>
+            <option>Premier League</option>
+            <option>LaLiga</option>
+            <option>Serie A</option>
+            <option>Bundesliga</option>
+            <option>Ligue 1</option>
+            <option>Brasileirao</option>
+            <option>Liga Profesional Argentina</option>
+            <option>Primera División Chile</option>
+            <option>Primera B Chile</option>
+            <option>Copa Chile</option>
+            <option>MLS</option>
+            <option>Otra competición</option>
+        </select>
 
         <label>Casa de apuestas</label>
-        <input type="text" name="bookmaker" value="{{ form_data.bookmaker if form_data else '' }}">
+        <input type="text" name="bookmaker" value="Betsson">
 
-        <label>Equipo Local</label>
-        <input type="text" name="home_team" value="{{ form_data.home_team if form_data else '' }}">
+        <label>Equipo local</label>
+        <input type="text" name="home_team" value="Colo Colo">
 
-        <label>Equipo Visitante</label>
-        <input type="text" name="away_team" value="{{ form_data.away_team if form_data else '' }}">
+        <label>Equipo visitante</label>
+        <input type="text" name="away_team" value="Universidad de Chile">
 
-        <label>Cuota Local</label>
-        <input type="number" step="0.01" name="cuota_home">
+        <h2>Cuotas 1X2</h2>
 
-        <label>Cuota Empate</label>
-        <input type="number" step="0.01" name="cuota_draw">
+        <label>Cuota local</label>
+        <input type="number" step="0.01" name="cuota_home" value="2.10">
 
-        <label>Cuota Visitante</label>
-        <input type="number" step="0.01" name="cuota_away">
+        <label>Cuota empate</label>
+        <input type="number" step="0.01" name="cuota_draw" value="3.30">
 
-        <button type="submit">Analizar Partido</button>
+        <label>Cuota visitante</label>
+        <input type="number" step="0.01" name="cuota_away" value="3.50">
+
+        <h2>Datos estadísticos</h2>
+
+        <label>xG local</label>
+        <input type="number" step="0.01" name="xg_home" value="1.75">
+
+        <label>xGA local</label>
+        <input type="number" step="0.01" name="xga_home" value="1.10">
+
+        <label>xG visitante</label>
+        <input type="number" step="0.01" name="xg_away" value="1.25">
+
+        <label>xGA visitante</label>
+        <input type="number" step="0.01" name="xga_away" value="1.40">
+
+        <label>ELO local</label>
+        <input type="number" name="elo_home" value="1680">
+
+        <label>ELO visitante</label>
+        <input type="number" name="elo_away" value="1620">
+
+        <label>Forma local últimos 5 partidos, puntos de 15</label>
+        <input type="number" name="form_home" value="10">
+
+        <label>Forma visitante últimos 5 partidos, puntos de 15</label>
+        <input type="number" name="form_away" value="8">
+
+        <label>Tamaño de muestra</label>
+        <input type="number" name="sample_size" value="10">
+
+        <label class="check">
+            <input type="checkbox" name="anomaly">
+            Evento anómalo detectado
+        </label>
+
+        <button type="submit">Analizar partido</button>
     </form>
 
     {% if result %}
     <div class="resultado">
-        <h2>Resultado</h2>
-        <pre>{{ result }}</pre>
+        <h2>Resultado del análisis</h2>
+
+        <p><strong>Partido:</strong> {{ result.match }}</p>
+        <p><strong>Liga:</strong> {{ result.league }}</p>
+        <p><strong>Casa:</strong> {{ result.bookmaker }}</p>
+
+        <h3>Goles esperados ajustados</h3>
+        <p>Local: {{ result.xg_adjusted.home }}</p>
+        <p>Visitante: {{ result.xg_adjusted.away }}</p>
+
+        <h3>Marcadores más probables</h3>
+        <ul>
+            {% for score in result.top_scores %}
+            <li>{{ score.score }} — {{ score.probability }}%</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Mercados 1X2</h3>
+        <table>
+            <tr>
+                <th>Resultado</th>
+                <th>Cuota</th>
+                <th>Modelo</th>
+                <th>Mercado</th>
+                <th>Diferencia</th>
+                <th>Valor</th>
+                <th>Riesgo</th>
+                <th>IGC</th>
+                <th>Confianza</th>
+            </tr>
+            {% for a in result.analyses %}
+            <tr>
+                <td>{{ a.outcome_label }}</td>
+                <td>{{ a.price }}</td>
+                <td>{{ a.model_probability }}%</td>
+                <td>{{ a.market_probability }}%</td>
+                <td>{{ a.edge }}%</td>
+                <td>{{ a.value_label }}</td>
+                <td>{{ a.risk }}</td>
+                <td>{{ a.igc }}</td>
+                <td>{{ a.confidence }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="resumen">
+            <h3>Resumen rápido</h3>
+            <p><strong>Mejor opción estadística:</strong> {{ result.best.outcome_label }}</p>
+            <p><strong>Valor:</strong> {{ result.best.value_label }}</p>
+            <p><strong>Riesgo:</strong> {{ result.best.risk }}</p>
+            <p><strong>Motivo:</strong> {{ result.best.reason }}</p>
+        </div>
     </div>
     {% endif %}
 
-    <a href="/history">Ver Historial</a>
+    <a href="/history" class="link">Ver historial</a>
 
 </div>
-
 </body>
 </html>
