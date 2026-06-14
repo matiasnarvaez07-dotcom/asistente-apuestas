@@ -30,12 +30,17 @@ def search_team(team_name):
     )
 
     if response.status_code != 200:
-        return None
+    print("ERROR SEARCH TEAM:", team_name)
+    print("STATUS:", response.status_code)
+    print("RESPUESTA:", response.text)
+    return None
 
     data = response.json()
 
     if not data.get("response"):
-        return None
+    print("SIN RESULTADOS PARA:", team_name)
+    print("RESPUESTA API:", data)
+    return None
 
     team = data["response"][0]["team"]
 
