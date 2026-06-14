@@ -33,7 +33,8 @@ def search_team(team_name):
         return None, f"API-Football respondió error {response.status_code}: {response.text}"
 
     data = response.json()
-
+print("BUSCANDO:", team_name)
+print("RESPUESTA API:", data)
     teams = data.get("response", [])
 
     if not teams:
